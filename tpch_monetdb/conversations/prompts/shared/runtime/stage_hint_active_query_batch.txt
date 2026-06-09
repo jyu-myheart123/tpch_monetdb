@@ -1,0 +1,1 @@
+Active query batch: $query_ids

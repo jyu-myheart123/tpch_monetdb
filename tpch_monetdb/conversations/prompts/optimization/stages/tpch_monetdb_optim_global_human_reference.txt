@@ -1,0 +1,48 @@
+${constraints}
+
+Deprecated compatibility prompt: run one trace-driven global diagnosis and hypothesis
+execution pass for the full workload. New orchestration uses
+`tpch_monetdb_optim_global_diagnosis.txt` followed by
+`tpch_monetdb_optim_hypothesis_execution.txt`; this asset remains only for old
+conversation JSON compatibility.
+
+Read these files first:
+1. ${hotspot_summary_path}
+2. TODO.md
+3. storage_plan.txt
+4. workload_objective.json
+5. data_law_contract.json
+6. storage_plan_contract.json
+
+Do not optimize a single query in isolation. Build a system model from trace/profile,
+timing, layout, materialization, correctness, and PMU evidence. Known issue
+categories such as layout alignment, vectorization, materialization, or
+instrumentation repair may be used only as posterior labels, not as execution
+targets.
+
+Do not use a fixed direction queue. Do not prefer layout, vectorization,
+materialization, or instrumentation repair unless the evidence-backed hypothesis
+requires it. If evidence is insufficient, report an evidence gap instead of
+rewriting query algorithms.
+
+Every proposed change must bind to a specific hypothesis with evidence refs,
+affected queries, expected mechanism, implementation scope, correctness risk,
+and verification plan. Final benchmark code must remain the non-instrumented
+path and must not route through `query_shared_instrumented.*` or
+`execute_*_instrumented` replacements.
+
+${bespoke_storage_related}
+
+The global decision must close objective failures, not just improve aggregate geomean. If any critical query objective, vectorization requirement, PMU requirement, or storage-plan alignment is not satisfied, report the exact failure route instead of claiming convergence.
+
+If the hotspot summary shows infrastructure blockers or insufficient evidence, do not rewrite query algorithms. Improve the control/evidence path instead.
+
+Make at most one coherent hypothesis-bound change. If no code change is justified,
+report that and stop.
+
+At the end, report:
+1. global decision
+2. files changed
+3. queries expected to improve
+4. queries at regression risk
+5. whether this aligns with storage_plan_contract.json / storage_plan_alignment.json or intentionally departs from them

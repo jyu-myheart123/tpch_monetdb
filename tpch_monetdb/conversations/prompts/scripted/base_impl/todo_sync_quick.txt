@@ -1,0 +1,9 @@
+Read TODO.md. Update the checklist: mark completed items as [x] and in-progress items as [~]. Do not edit implementation files. Do not start new implementation.
+
+Preserve the original TODO plan shape. Do not delete checklist items, do not merge query-specific items into broad summary items, and do not add collapsed status items such as `Q1-Q22 all implemented`, `all critical queries validated`, or `vectorization-ready layout complete`.
+
+Use evidence from the immediately preceding implementation, correctness, or benchmark stage:
+- Mark a query implementation item [x] only when the focused query file has been written.
+- Mark a correctness item [x] only when the run-tool validator reported PASS for that query or scope.
+- Mark a base performance observation item [x] when benchmark output reported generated no-output kernel runtime, MonetDB baseline runtime, and speedup for that query or scope. This is observation-only; speedup below 1.0x still counts as observed.
+- Mark unresolved or unmeasured work as [~] or leave it [ ].

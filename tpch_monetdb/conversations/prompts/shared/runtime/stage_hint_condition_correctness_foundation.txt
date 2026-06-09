@@ -1,0 +1,1 @@
+Q1 validation must pass for the latest file revision before this stage can finish. If Q1 exposes missing lineitem columns, date parsing, discount/tax arithmetic, group keys, ordering, or row materialization, fix loader_impl.*, builder_impl.*, query_impl.*, or focused query files as needed, then rerun only Q1 validation.

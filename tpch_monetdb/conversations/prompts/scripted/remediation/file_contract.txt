@@ -1,0 +1,10 @@
+$original_prompt
+
+[FILE CONTRACT REMEDIATION]
+Stage `$stage_label` failed a recoverable file contract check: $failed_postcondition.
+Required primary file(s): $required_targets.
+Recent writes: $recent_writes.
+Last validation summary: $last_validation.
+You placed the implementation in the wrong file or failed to create the required primary file.
+Do not explain the mistake. Immediately create or move the primary implementation into the required file path(s), keep shared helpers only in allowed shared files, and stop once the file contract is satisfied.
+This stage allows at most $remediation_limit remediation attempts for file-contract errors.

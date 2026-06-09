@@ -1,0 +1,14 @@
+# Stage 4: TODO Sync
+
+Read `TODO.md`.
+Update the checklist to reflect the skeleton work that is now complete.
+Mark completed checklist items as done.
+Do not edit implementation files in this step.
+
+Keep the TODO structure intact:
+- Do not delete sections or checklist items.
+- Do not merge query-specific checklist items into broad summary items.
+- Do not add collapsed status items such as `Q1-Q22 all implemented`, `all critical queries validated`, or `vectorization-ready layout complete`.
+- Mark correctness items `[x]` only when the run-tool validator has reported PASS for the matching query or query scope.
+- Mark base performance observation items `[x]` when generated no-output kernel runtime, MonetDB baseline runtime, and speedup have been observed for that query or scope; speedup below 1.0x is still a completed observation, not a failure.
+- Use `[~]` for implemented-but-unvalidated work or benchmark observations that have not been run yet.

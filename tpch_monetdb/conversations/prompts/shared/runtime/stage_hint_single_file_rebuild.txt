@@ -1,0 +1,1 @@
+Single-file rebuild mode: fully rewrite $target with write_file before retrying compile or run.

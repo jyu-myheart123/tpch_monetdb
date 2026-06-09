@@ -1,0 +1,27 @@
+# Compatibility Template: TPC-H Q2 Member
+
+This prompt asset is retained for old conversation JSON compatibility. New base workflows implement Q2 through the focused `query_q2.cpp` vertical slice.
+
+Check TODO.md for the planned implementation order and file structure.
+Implement TPC-H Q2 as part of the active vertical slice. Do not use this prompt to block work on Q1 or any other requested query module.
+
+**Q2 / minimum cost supplier**
+- Joins `part`, `supplier`, `partsupp`, `nation`, and `region`
+- Applies part size/type suffix and region filters
+- Implements the per-part minimum `ps_supplycost` subquery semantics
+- Preserves ORDER BY `s_acctbal desc`, `n_name`, `s_name`, `p_partkey`
+- Primary implementation must live in `query_q2.cpp` (create or update it)
+- Declare exactly `void execute_q2(Engine& engine, const Q2Args& args);` in `query_q2.hpp` and define it in `query_q2.cpp`. `Q2Args` and `parse_q2` are in `args_parser.hpp`. Do NOT use `namespace query_q2 { void run(...) }`.
+- $query_output_protocol
+- You may also edit existing `query_q*.cpp` / `query_q*.hpp` for shared fixes. You may edit `loader_impl.*`, `builder_impl.*`, Engine layout files, and shared helpers when TPC-H Q2 exposes a real Engine contract gap.
+- Touch `query_shared_*.cpp` / `query_shared_*.hpp` only for pure helpers such as formatting or reusable kernels; do not define `dispatch_query(...)`, `dispatch_unimplemented_query(...)`, or any `execute_q<N>(...)` entrypoint in shared files.
+- Keep `query_impl.cpp` thin: dispatcher / routing only. `query_impl.cpp` must not define `execute_q2(...)` or any other `execute_q*` stub; ownership of `execute_q2(...)` belongs to `query_q2.cpp`.
+- `dispatch_query()` is implemented by a build-generated registry under `build/generated/`; do not hand-edit generated registry files in this stage.
+- Do not place non-declarative query logic in `builder_impl.hpp`.
+- Do not infer Q2 row count from a single table scan. Match the validator's oracle rows after join, minimum-cost filtering, and ORDER BY.
+- Match the QueryContract output columns and CSV output exactly.
+- Do not read or reconstruct source `.tbl` rows from query code. If Q2 needs missing table columns, join-key maps, filters, minimum-cost state, or ordering data, repair RawData, `loader_impl`, `builder_impl`, or Engine layout first.
+
+$codegen_hint_text
+
+Focus on correctness first, optimization later. Do not make an empty compatibility-only edit just to satisfy the stage; correctness/evidence gates determine progress.

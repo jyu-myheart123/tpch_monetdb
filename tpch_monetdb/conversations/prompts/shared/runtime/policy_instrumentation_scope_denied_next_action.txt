@@ -1,0 +1,1 @@
+Limit instrumentation edits to loader/builder/query runtime files, shared tracing helpers, or the active query batch.

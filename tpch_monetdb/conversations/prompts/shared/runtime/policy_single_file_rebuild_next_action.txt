@@ -1,0 +1,1 @@
+Use write_file to fully rewrite $target before any further incremental edits or patch attempts.

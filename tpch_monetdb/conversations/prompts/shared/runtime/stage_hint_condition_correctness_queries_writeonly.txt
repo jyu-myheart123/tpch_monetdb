@@ -1,0 +1,1 @@
+current query validation must pass before this stage can advance. After any code write, compile success alone is insufficient; rerun scoped run-tool validation on the latest file revision.

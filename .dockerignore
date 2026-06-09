@@ -1,0 +1,14 @@
+.git
+.DS_Store
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+wandb/
+tpch_monetdb_artifacts*/
+tpch_monetdb_data*/
+*.pyc
+*.pyo
+*.so

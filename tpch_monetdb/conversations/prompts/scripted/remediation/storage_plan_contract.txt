@@ -1,0 +1,10 @@
+$original_prompt
+
+[STORAGE PLAN CONTRACT REPAIR ADVISORY]
+Stage `$stage_label` completed its file writes, but the machine-readable storage contract still has repairable gaps:
+$failed_postcondition.
+Recent writes: $recent_writes.
+
+Do not start base implementation work. Repair only `storage_plan_contract.json` and, if needed for consistency, `storage_plan.txt`. Fill the missing critical query cost fields, critical query access paths, query coverage, selected layout obligations, and data-law references using the already-read control artifacts. Keep the contract as a committed v2 contract and do not add full candidate bodies back into `storage_plan_contract.json`.
+
+This advisory allows at most $remediation_limit repair attempts. If the advisory remains after those attempts, the run will continue and record the incomplete alignment as a warning instead of failing the later base stage.

@@ -1,0 +1,1 @@
+ If the plan is clear enough, write TODO.md now and stop.

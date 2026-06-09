@@ -1,0 +1,31 @@
+# Stage 2: Finish Skeleton
+
+Read `TODO.md` first.
+Read `design_evidence.md` before deciding the first vertical slice.
+Finish the TODO items related to loader, builder, and query skeleton work.
+Do not edit `TODO.md` in this step.
+
+Implement the vertical skeleton first:
+1. Implement `loader_impl` to parse TPC-H `.tbl` table files into `RawData`
+2. Implement `builder_impl` to build `Engine` with typed table vectors and basic join/filter/order support
+3. Implement the query dispatcher and focused query module ABI declarations without adding fake query-output paths
+
+Focus on getting the data flow working: TPC-H table directory -> RawData -> Engine -> Query Dispatcher.
+Prioritize loader fidelity, output fidelity, join fidelity, ordering fidelity, and numeric formatting immediately in the first slice. Do not defer missing table rows, date parsing, join-key typing, ORDER BY stability, or decimal/float formatting problems to later correctness stages.
+Build Engine as the query-ready boundary for later query modules. Query entrypoints should consume Engine fields; they should not rediscover input table files or parse source `.tbl` rows when a field is missing.
+
+At this foundation stage, query execution may remain unimplemented for families that have not reached their family vertical-slice stage yet. Missing entrypoints or missing Engine fields must fail fast during build, registry validation, or the focused correctness stage; do not emit fake CSV rows, synthetic results, or a catch-all runtime path to satisfy a gate.
+
+**Start from the skeleton files in the workspace.** The build and query templates are minimal skeletons; implement the core loader, builder, Engine, and dispatcher logic from scratch.
+Do not invent alternative API files or rename the host-facing entrypoints.
+
+**Companion query module API contract** (applies to all companion query files you create):
+- Each `query_q<N>.cpp` / `query_q<N>.hpp` must expose a free function (NOT a namespace member):
+  `void execute_q<N>(Engine& engine, const Q<N>Args& args);`
+- `Q<N>Args` and `parse_q<N>` are already defined in `args_parser.hpp`; do not redefine them.
+- The build-generated registry calls `execute_q<N>(engine, args)` - match this name exactly.
+- Do NOT write `namespace query_q<N> { void run(...) }`.
+
+$finish_skeleton_asset
+
+Stop this step once the skeleton files are updated.

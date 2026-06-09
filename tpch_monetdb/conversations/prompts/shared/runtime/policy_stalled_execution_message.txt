@@ -1,0 +1,1 @@
+The $tool_name tool produced the same summarized output $repeat_count times without any intervening write in stage $stage_name.

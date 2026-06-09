@@ -1,0 +1,12 @@
+Q1/Q9 critical-query checklist:
+
+Q1:
+- Consume typed lineitem columns and reusable date/filter/group-key state from Engine.
+- Keep discount/tax arithmetic, `l_returnflag`/`l_linestatus` aggregation, and final ordering inside the query kernel.
+- Do not read raw `.tbl` rows or rediscover source files in query code when loader/builder can provide typed table state.
+
+Q9:
+- Use reusable part/supplier/partsupp/lineitem/orders/nation access paths from Engine.
+- Filter part-name color and join candidates before expanding expensive lineitem/order work when SQL semantics allow it.
+- Prefer compact join candidate lists and bounded `(nation, year)` profit accumulators.
+- Validate both no-output kernel timing and full CSV correctness boundaries.

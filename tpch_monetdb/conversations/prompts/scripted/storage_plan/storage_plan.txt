@@ -1,0 +1,177 @@
+Your task is to analyze the ${benchmark} workload and produce a creative in-memory storage-layout summary. You may propose conventional or unconventional designs, but every major change must stay grounded in the evidence package and the runtime constraints of this workload.
+
+## How to start
+
+1. Read `workload_objective.json` first and identify the critical query IDs and required evidence gates.
+2. Read `data_law_contract.json`; every major layout claim must cite one or more `law_id` values from it.
+3. Read `design_evidence.md`.
+4. Read the queries you must support from `queries.txt`.
+5. Read the argument parser in `args_parser.hpp` to understand query parameter types.
+6. Use the evidence to draft a storage plan that is justified by real workload facts.
+7. Treat `design_evidence.md#Query Intent and Cost Semantics` and the `Intent` / `Access pattern` / `Cost notes` / `Semantic traps` blocks in `queries.txt` as required workload context; do not infer the workload purpose from SQL column names alone.
+
+## Table schema
+
+${schema}
+
+Data source: ${data_source_description}
+
+## Hard constraints
+
+- Store all data losslessly (layout must be reversible to the original rows).
+- Do NOT duplicate logical data.
+- You MAY use shared specialized physical structures such as indexes, dictionary
+  encoding, offset tables, key maps, join adjacency, sorted row-id vectors, and
+  predicate-support metadata when they support the fixed TPC-H workload without
+  precomputing aggregate answers.
+- Build-time sidecars are legal only for reusable physical facts such as table
+  row offsets, primary-key dictionaries, foreign-key adjacency, string
+  dictionaries, date partitions, or sorted row-id lists.
+- Do NOT build SUM/COUNT/MAX/MIN/AVG rollups during ingestion. Query-specific
+  aggregate sidecars or aggregate indexes are forbidden pre-aggregation, even
+  when they are lossless and shared by semantics.
+- Do NOT use per-query materialized answers, per-query caches, or any
+  query-specific precomputed result map.
+- Single-node, single-threaded, in-memory only.
+- Leave the input/output interface unchanged.
+- Always load all required TPC-H tables during ingestion (do not skip rows or columns).
+
+## What to produce
+
+Write the final committed implementation plan to `storage_plan.txt` and the
+machine-readable committed contract to `storage_plan_contract.json`. You may also
+write `storage_plan_candidates.json` as an archival planning artifact for the
+candidate exploration, but the committed plan and committed contract must not
+carry full rejected candidate designs into implementation.
+
+## Planning mode
+
+${planning_mode_instructions}
+
+The committed JSON contract is mandatory and must include:
+
+1. `version`: 2.
+2. `selected_base_candidate_id`: the candidate idea chosen as the base direction.
+3. `committed_layout`: the refined final layout with `layout_id`, `summary`,
+   `data_law_ids`, `evidence_refs`, and `selection_rationale`.
+4. `refinement_decisions`: evidence-based changes made after selecting the base
+   idea. These must cite MonetDB/TPC-H output semantics, query type/access pattern,
+   `design_evidence.md` row_count/table-cardinality/risk_flags, and critical targets
+   when applicable.
+5. `critical_query_access_paths`: one entry for every critical query in
+   `workload_objective.json`. Each entry must include:
+   - `semantic_class`
+   - `selected_access_path`
+   - `rejected_access_paths`
+   - `evidence_refs`
+   - `data_law_ids`
+   - `not_query_answer_cache: true`
+   - `access_path_kind` or `legality` explaining whether the path is a reusable
+     physical structure or a reusable query-kernel path.
+   - The selected access path must be a reusable physical structure or reusable
+     query-kernel path for the query's table/join/filter/order/aggregation shape.
+   - `selected_access_path` must not be a per-query materialized answer cache.
+   - For join-heavy queries, name the key maps, adjacency lists, sorted row-id
+     vectors, or probe order that make the selected path reusable.
+   - For scan/aggregation queries, name the columnar vectors, date partitions,
+     predicate masks, or vectorization-friendly loop shape that make the selected
+     path reusable without build-time aggregate rollups.
+6. `selected_layout_obligations`: concrete Engine / builder / query-kernel
+   obligations. Each obligation must include `id`, `file_scope`, `query_ids`,
+   and `evidence_refs`.
+7. `query_family_costs`: per-query or per-family predictions for every critical
+   query listed in `workload_objective.json`.
+8. For each critical query cost: predicted scan rows, lookup cost, output
+   rows/cardinality, cache locality, vectorization lane shape, build/memory
+   cost, and risk.
+9. For each critical query cost, include at least one evidence reference to
+   `design_evidence.md#Query Intent and Cost Semantics` or to the matching query
+   block in `queries.txt`.
+
+Do not put full `candidate_layouts` in `storage_plan_contract.json`. If you need
+to preserve the exploration, put those candidates in `storage_plan_candidates.json`
+and reference them from the committed contract only by id/hash/short rationale.
+
+Write a storage plan document to `storage_plan.txt` that specifies:
+
+1. **RawData structure** (loader_impl.hpp) — how TPC-H table files are initially parsed and stored.
+2. **Engine structure** (builder_impl.hpp) — in-memory representation optimised for queries.
+3. **Build process** (builder_impl.cpp) — how to transform RawData -> Engine.
+4. **Query execution strategy** — how each query family in `queries.txt` maps to the engine.
+5. **Vectorization-readiness** — whether the chosen layout preserves contiguous,
+   fixed-width, branch-light, and cache-friendly hot loops that the compiler can
+   auto-vectorize later.
+
+For initial planning mode, you MUST first explore multiple candidate layouts before
+committing to a final storage plan. Candidate exploration is for reasoning only:
+after choosing a base idea, refine it against MonetDB/TPC-H output semantics, query
+types/access patterns, `design_evidence.md`, and `workload_objective.json`, then
+write only the refined committed design into `storage_plan.txt`. For repair and
+delta modes, keep the existing selected layout as the baseline and only change the
+parts justified by the previous round evidence. The document must therefore include:
+
+1. **Candidate exploration summary** — compact reasoning only, or a reference to
+   `storage_plan_candidates.json`; do not include full rejected designs in the
+   committed implementation sections.
+2. **Candidate comparison / delta comparison** — a compact comparison across:
+   - query-family fit
+   - correctness risk
+   - build / ingest complexity
+   - vectorization-readiness
+   - expected memory / locality behavior
+3. **Rejected candidates / rejected deltas** — short reasons only.
+4. **Refinement decisions** — how the selected base idea changed after considering
+   MonetDB/TPC-H outputs, query types, output cardinality, and critical-query targets.
+5. **Final committed recommendation** — the single design to implement.
+
+Mode-specific output contract:
+
+- `initial_candidates`: explore exactly three broad candidate layouts in
+  `storage_plan_candidates.json` or in a compact exploration summary, then emit a
+  version-2 committed `storage_plan_contract.json` without full candidate bodies.
+- `delta_plan`: do not regenerate broad A/B/C candidates. Include the current selected
+  layout, failing objective route, targeted deltas, changed obligations, unchanged
+  obligations, critical access-path updates, and a short `why_not_changing_layout`
+  rationale.
+- `repair_alignment`: do not change runtime design unless impossible to repair.
+  Fix only contract-missing fields, non-machine-readable obligations, incomplete
+  evidence refs, and TODO/selected-layout inconsistencies.
+- If previous feedback says `success=false` and measurement is unavailable, emit only
+  instrumentation/evidence repair, vectorization evidence, or measurement-contract
+  repair deltas; do not rewrite layout.
+
+## Evidence requirements
+
+- Every major layout choice must cite concrete evidence from `design_evidence.md`.
+- Every query-family cost claim must cite the query intent and semantic-trap evidence, not only SQL text or output columns.
+- Use exact query IDs plus quantitative signals when available, such as
+  runtime ranking positions, `row_count`, table cardinality, output cardinality,
+  table cardinality, join graph, predicate selectivity, or measured baseline data.
+- Explicitly explain how the chosen layout avoids being dragged down by `Q1`,
+  `Q8`, `Q9`, `Q11`, `Q12`, and `Q15`.
+- Mark any claim that is not directly proven by `design_evidence.md` as
+  `Unverified assumption: ...`.
+- Novel ideas are allowed, but do not redesign the layout just to be different.
+- Do NOT assume a specific kernel design or encoding strategy upfront; separate
+  layout decisions from implementation assumptions.
+- Do NOT jump directly to one final layout. Explore the candidate space first,
+  then narrow to a final recommendation using the evidence package.
+- At least one candidate should be conservative and at least one candidate
+  should be more aggressive or unconventional, provided both stay within the
+  stated hard constraints.
+- Treat vectorization-readiness as a first-class layout property, not as an
+  optimization-afterthought. Explicitly state whether the layout enables:
+  contiguous scans, fixed-width accumulators, predictable branch behavior,
+  dense-id lookup paths, and compiler-friendly loop bodies.
+- If a proposed layout would block later SIMD/auto-vectorization work for the
+  dominant query families, call that out explicitly and justify why the tradeoff
+  is still worth it.
+- Use the structure-oriented evidence in `design_evidence.md` when deciding
+  whether columnar vectors, join-key dictionaries, date partitions, sorted row-id
+  lists, or more hybrid layouts are justified.
+- If a candidate depends on facts such as table cardinality, join selectivity,
+  order-key locality, string predicate selectivity, or date-range clustering,
+  explicitly cite the corresponding evidence section or mark the dependency as
+  `Unverified assumption: ...`.
+${prev_feedback_section}
+Write the storage plan to `storage_plan.txt` and the machine-readable contract to `storage_plan_contract.json`.

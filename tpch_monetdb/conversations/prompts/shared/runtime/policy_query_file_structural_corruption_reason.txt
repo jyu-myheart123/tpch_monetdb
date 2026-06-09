@@ -1,0 +1,1 @@
+Repeated compile failures indicate that $target is structurally corrupted. Switch to single-file rebuild mode and fully rewrite it with write_file.

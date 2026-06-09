@@ -1,0 +1,30 @@
+[project]
+name = "tpch_monetdb"
+version = "0.3.0"
+description = "Synthesizing Workload-Specific TPC-H engines with a MonetDB baseline."
+requires-python = ">=3.10"
+dependencies = [
+    "landlock>=1.0.0.dev5",
+    "numpy>=2.2.0,<2.3.5",
+    "openai==2.30.0",
+    "openai-agents[litellm]>=0.13.6,<0.14",
+    "prompt-toolkit>=3.0.52",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "python-dotenv==1.2.1",
+    "requests>=2.32.0",
+    "wandb>=0.19.0",
+    "weave>=0.52.22",
+]
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tpch_monetdb*"]
+exclude = ["tpch_monetdb_artifacts*", "tpch_monetdb_data*", "wandb*", "__pycache__*"]
+
+[tool.setuptools.package-data]
+"tpch_monetdb.misc" = ["**/*.cpp", "**/*.hpp"]

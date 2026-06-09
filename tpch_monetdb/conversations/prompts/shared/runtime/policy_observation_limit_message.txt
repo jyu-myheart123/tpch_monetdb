@@ -1,0 +1,1 @@
+STAGE_POLICY_ERROR: You have used $current_count consecutive observation calls in stage $profile_name. Hard limit: $hard_limit_text. Reading is allowed, but if you already understand the current files, prefer making progress now. Write tools available: $progress_tools. Editable scope: $editable_scope.$create_scope$stage_guidance

@@ -1,0 +1,1 @@
+When calling tools, emit exactly one JSON object matching the tool schema directly. Do not wrap arguments in raw_arguments. Prefer small exact reads and edits over broad speculative tool calls.

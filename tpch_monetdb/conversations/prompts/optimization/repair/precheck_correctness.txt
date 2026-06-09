@@ -1,0 +1,1 @@
+Initial correctness check failed for one or more queries. Fix the code so validation passes for ALL configured queries and scale factors. Do not add new features or optimize. Only fix correctness bugs.

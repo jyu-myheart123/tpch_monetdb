@@ -1,0 +1,19 @@
+# Stage: Wire Entrypoint for Q$qid
+
+Before making any changes, use the read_file tool to read TODO.md.
+
+Query Q$qid belongs to the **$family_name** family.
+The shared family path already exists in `$kernel_source`.
+
+**Create only a thin entrypoint** `query_q$qid.cpp` / `query_q$qid.hpp`:
+- About 15 lines of code when the Engine contract is already sufficient
+- Call `parse_q$qid()` from `args_parser.hpp`
+- Call the `$family_name` family kernel or an equivalent shared-kernel function with the correct query-specific parameters
+- Declare `void execute_q$qid(Engine& engine, const Q${qid}Args& args);`
+- Do not duplicate helper functions such as date parsing, join lookup, ordering, or output formatting
+- Do not duplicate aggregation or lookup logic; the family kernel owns shared runtime behavior
+- Do not read or reconstruct source `.tbl` rows from the entrypoint; if required Engine data is missing, stop and report that the family vertical slice must repair loader/builder/Engine first
+
+$query_output_protocol
+
+Do not run compile or run.

@@ -1,0 +1,1 @@
+ In implement_queries_writeonly, write the primary query module for the current query and then stop.

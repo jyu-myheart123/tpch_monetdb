@@ -1,0 +1,56 @@
+${constraints}
+
+Optimize query ${query_id} using the collected trace summary and the expert knowledge.
+
+Trace summary:
+${trace_summary}
+
+Hardware Counter Evidence:
+${hardware_counter_evidence}
+
+The system may flag this query as `infra_blocked` before this prompt runs; if so, you will be told directly and should not proceed with query changes.
+
+First classify the query into exactly one issue class:
+- layout/access-path bound
+- kernel/compute bound
+- materialization/output bound
+- evidence_insufficient
+
+Objective routing is mandatory:
+- If this query is critical in `workload_objective.json`, your change must cite the objective ID and the data-law IDs it serves.
+- If issue class is layout/access-path bound for a critical query, do not take a convenience query-local path. Either make a structural layout/access-path change that matches `storage_plan_contract.json`, or stop and report that the route must return to storage plan/base implementation.
+- If a critical query is missing from `critical_query_access_paths`, if its selected access path is ambiguous, or if runtime evidence contradicts the committed access path, report `STORAGE_PLAN_REFINEMENT_REQUIRED` instead of patching a query-local workaround.
+- If issue class is kernel/compute bound and the objective requires vectorization, optimize the actual hot loop and leave compiler-report evidence that maps to the hot path; an unrelated optimized loop is not success.
+- If hardware-counter evidence is required but missing/degraded, do not guess. Improve instrumentation or report `PMU_REQUIRED_BUT_MISSING`.
+
+Vectorization-first repair for critical queries:
+- Read `workload_objective.json` before editing. When this query has `requires_vectorization=true`, treat vectorization as the primary optimization route unless trace evidence proves the bottleneck is layout/access-path or materialization/output bound.
+- Work only on the existing final-path hot loop. Do not use `_mm256_set_pd(col3[i], col2[i], ...)` or unrelated AVX intrinsics as proof of vectorization; the useful loop shape is contiguous-row or contiguous-column SIMD over the storage-plan arrays.
+- For Q8/Q9-style host-block scans, prefer lane-parallel scans over contiguous `usage_*` double arrays with bounded accumulators. For Q11/Q12, prefer `usage_user` SIMD compare + mask before materializing matching rows. For Q15, prefer contiguous `usage_user` max/reduction before bucket/output work.
+- At the end, name the hot-loop owner file and explain how the change should appear in compiler vectorization reports and query-only PMU evidence. The ledger, compiler report, PMU provenance, and benchmark records decide success; prompt claims or token matches do not.
+
+If issue class is evidence_insufficient, improve instrumentation for this query only and stop after validation passes.
+PROFILE_SCOPE is allowed inside the existing final-path kernel only. Do not create `query_shared_instrumented.*`, do not create `execute_*_instrumented` functions, and do not redirect `query_q*.cpp` entrypoints to instrumented replacements.
+
+If evidence is sufficient, choose one primary optimization axis and make one targeted change.
+Do not mix unrelated layout, kernel, output, and container rewrites in the same stage.
+
+If issue class is materialization/output bound, focus on output formatting, string materialization, or result serialization — do not rewrite scan or aggregate kernels.
+If issue class is layout/access-path bound, focus on data layout, column ordering, or access paths — do not rewrite numeric compute kernels.
+If issue class is kernel/compute bound, focus on the specific numeric or scan kernel that dominates the profile.
+
+Expert guidance:
+${expert_knowledge}
+
+Query guidance:
+${query_guidance}
+
+Target: reduce runtime below ${target_rt} at sf ${sf}. Current runtime: ${current_rt}.
+${bespoke_storage_related}
+
+At the end, report:
+1. issue_class
+2. hot path
+3. changed files
+4. expected effect
+5. risks for other queries

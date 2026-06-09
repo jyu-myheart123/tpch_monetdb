@@ -1,0 +1,1 @@
+Storage layout changes are not allowed in this stage. Leave the RawData and Engine storage layout unchanged.

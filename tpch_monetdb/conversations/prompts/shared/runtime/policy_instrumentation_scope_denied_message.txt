@@ -1,0 +1,1 @@
+Path $relative_path is outside the active instrumentation scope. Allowed scope: $allowed_patterns

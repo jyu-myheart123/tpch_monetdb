@@ -1,0 +1,10 @@
+Use the host-owned sealed manifest to decide the active query unit for query $qid.
+Keep the resolved unit kind explicit as $unit_kind before editing any family kernel.
+Keep `query_q{qid}.cpp` as the ABI entrypoint surface when required, but allow
+manifest-owned `query_family_*` files to own shared kernels for family units.
+Do not reintroduce per-query-only ownership rules through scripted prompt prose.
+When choosing the first implementation slice, preserve the storage-plan
+vectorization-readiness goals: prefer contiguous traversal, fixed-width
+accumulators, branch-light hot loops, dense-id lookup structures, and loop
+shapes that remain compiler-friendly for later auto-vectorization or guarded
+SIMD work.

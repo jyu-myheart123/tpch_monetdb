@@ -1,0 +1,23 @@
+# Compatibility Template: TPC-H Q1 Member
+
+This prompt asset is retained for old conversation JSON compatibility. New base workflows implement Q1 through the focused `query_q1.cpp` vertical slice.
+
+Check TODO.md for the planned implementation order and file structure.
+Implement TPC-H Q1 as part of the active vertical slice. Do not use this prompt to block work on other requested query modules.
+
+**Q1 / pricing summary report**
+- Scans `lineitem`, filters by `l_shipdate`, groups by `l_returnflag` and `l_linestatus`, computes decimal aggregates, and orders by the group keys
+- Primary implementation must live in `query_q1.cpp` (create or update it)
+- Declare exactly `void execute_q1(Engine& engine, const Q1Args& args);` in `query_q1.hpp` and define it in `query_q1.cpp`. `Q1Args` (empty struct) and `parse_q1` are in `args_parser.hpp`. Do NOT use `namespace query_q1 { void run(...) }`.
+- $query_output_protocol
+- You may also edit existing `query_q*.cpp` / `query_q*.hpp` for shared fixes. You may edit `loader_impl.*`, `builder_impl.*`, Engine layout files, and shared helpers when TPC-H Q1 exposes a real Engine contract gap.
+- Touch `query_shared_*.cpp` / `query_shared_*.hpp` only for pure helpers such as formatting or reusable kernels; do not define `dispatch_query(...)`, `dispatch_unimplemented_query(...)`, or any `execute_q<N>(...)` entrypoint in shared files.
+- Keep `query_impl.cpp` thin: dispatcher / routing only. `query_impl.cpp` must not define `execute_q1(...)` or any other `execute_q*` stub; ownership of `execute_q1(...)` belongs to `query_q1.cpp`.
+- `dispatch_query()` is implemented by a build-generated registry under `build/generated/`; do not hand-edit generated registry files in this stage.
+- Do not place non-declarative query logic in `builder_impl.hpp`.
+- Match the QueryContract output columns and CSV output exactly. The header field count and every data-row field count must match exactly.
+- Do not read or reconstruct source `.tbl` rows from query code. If Q1 needs missing lineitem columns, date filters, grouping keys, aggregate state, or ordering data, repair RawData, `loader_impl`, `builder_impl`, or Engine layout first.
+
+$codegen_hint_text
+
+Focus on correctness first, optimization later. Do not make an empty compatibility-only edit just to satisfy the stage; correctness/evidence gates determine progress.

@@ -1,0 +1,3 @@
+[Stage Context]
+Stage: $profile_name
+Available tools: $tool_names

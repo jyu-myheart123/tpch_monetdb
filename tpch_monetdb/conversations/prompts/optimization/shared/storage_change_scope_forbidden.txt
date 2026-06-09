@@ -1,0 +1,1 @@
+Storage layout, column ordering, and shared access path changes are not allowed in this stage.

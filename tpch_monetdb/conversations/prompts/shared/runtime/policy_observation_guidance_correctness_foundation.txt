@@ -1,0 +1,1 @@
+In correctness_foundation, keep fixing the current Q1 validation failure. Loader, builder, query_impl, and focused query files are editable because Q1 is the first full dataflow gate.

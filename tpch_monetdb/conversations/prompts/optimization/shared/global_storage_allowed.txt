@@ -1,0 +1,1 @@
+Storage layout changes are allowed only when the global evidence supports them.

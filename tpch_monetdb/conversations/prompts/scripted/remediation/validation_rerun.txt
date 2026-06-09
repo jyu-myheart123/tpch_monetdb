@@ -1,0 +1,9 @@
+$original_prompt
+
+[VALIDATION RERUN REQUIRED]
+Stage `$stage_label` failed a recoverable validation postcondition: $failed_postcondition.
+Expected query id: $expected_query_id.
+Recent writes: $recent_writes.
+Last validation summary: $last_validation.
+Compile if needed, then run the scoped correctness validation on the latest files. Compile success is not validation success. Do not stop after compile; stop only after the run tool reports validation PASS for the current file revision.
+This stage allows at most $remediation_limit remediation attempts for validation-rerun errors.

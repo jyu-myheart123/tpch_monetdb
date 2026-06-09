@@ -1,0 +1,8 @@
+Check TODO.md for performance-related checklist items for $query_scope_label, then call the run tool with scale_factor $max_scale_factor, optimize=true, and query_id=$query_ids_json.
+
+This is a base performance observation stage:
+- Use the run tool only; do not manually invoke a debug-built `./db`.
+- The benchmark profile will request generated no-output kernel runtime vs MonetDB baseline runtime and speedup.
+- Treat the output as evidence, not as a pass/fail gate. If the run succeeds but speedup is below 1.0x, do not edit code in this stage just to chase speedup.
+- If the run fails due to compile/runtime/validation errors, fix only the minimum issue needed to obtain valid benchmark evidence for $query_scope_label, then rerun.
+- In your final note, report generated no-output kernel runtime, MonetDB baseline runtime, and speedup for every measured query when the run output provides them.

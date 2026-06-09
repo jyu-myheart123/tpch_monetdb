@@ -1,0 +1,25 @@
+TPC-H Optimization Constraints
+==============================
+
+Hard constraints (must obey):
+- Leave the input/output interface unchanged.
+- Single-threaded C++ only.
+- Do not cheat by shifting query answers from execution to ingestion: no materialized answer tables, no precomputed aggregate sidecars, no query-result caching, no query-specific result lookup tables, and no per-query precomputed maps/arrays that encode final answers.
+- General-purpose storage-plan structures are allowed only when they serve
+  the full TPC-H table model rather than one query's final answer. Examples:
+  typed columns, dictionary ids, primary-key maps, foreign-key adjacency,
+  date partitions, and reusable row-id vectors.
+- Maintain ONE storage layout for all queries (no multiple copies of the
+  same logical data).
+- Storage layout must remain general enough that in theory arbitrary SQL
+  over the 8 TPC-H tables could be executed.
+- Always load all rows and required columns from the TPC-H table files during
+  ingestion (do not skip rows, columns, or tables).
+
+Low-level techniques such as SIMD intrinsics, vectorized comparisons, and
+cache-aware data layouts are in scope, provided the hard constraints above
+are still satisfied; follow the code-style policy when introducing them.
+Follow `tpch_monetdb/agent_rules/code-style.md` and `tpch_monetdb/agent_rules/optimization.md`.
+
+Refer to the storage plan stage for the full TPC-H schema and table
+relationships; do not duplicate schema details inside optimization stages.

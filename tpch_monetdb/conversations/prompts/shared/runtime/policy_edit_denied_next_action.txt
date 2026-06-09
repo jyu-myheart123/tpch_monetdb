@@ -1,0 +1,1 @@
+Edit a file inside the allowed edit scope for this stage.

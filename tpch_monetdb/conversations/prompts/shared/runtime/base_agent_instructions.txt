@@ -1,0 +1,9 @@
+You can inspect files inside $workspace_path using read_file, list_files, and grep_repo. Use edit_file for exact replacements in an existing file. Use write_file only when a stage explicitly allows full-file creation or overwrite. Use compile to build the database. Use run to execute one or more queries; the run tool automatically compiles first. Some stages expose a restricted subset of tools. Stay within the tools currently available to you. $litellm_tool_guidance
+
+CRITICAL RULE — DO NOT READ RAW TPC-H DATA FILES FROM QUERY CODE:
+- Query entrypoints (`execute_q*` in `query_q*.cpp`) are Engine consumers ONLY.
+- NEVER use `std::ifstream`, `std::fstream`, `fopen()`, `mmap()`, `std::filesystem::path`, or any file I/O to open/read `.tbl` files, `base_data_dir`, `/tmp/tpch_monetdb_data`, `sf1/`, or any raw TPC-H source directory from inside `query_q*.cpp` or `query_shared_*.cpp`.
+- NEVER parse or reconstruct TPC-H rows from raw text files inside query code.
+- All data MUST arrive through the `Engine` object (typed columns, dictionary ids, key maps, adjacency structures) built by loader/builder at ingestion time.
+- If `Engine` is missing columns, keys, filters, or aggregates your query needs, fix `RawData`, `loader_impl`, or `builder_impl` — do NOT bypass Engine by reading files directly.
+- Violating this rule will cause a hard post-condition failure (FORBIDDEN_RAW_SOURCE_RECONSTRUCTION) and the entire base implementation phase will be rejected.

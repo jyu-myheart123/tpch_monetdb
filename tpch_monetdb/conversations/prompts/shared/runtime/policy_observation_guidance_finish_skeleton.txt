@@ -1,0 +1,1 @@
+ In finish_skeleton, make one write inside the active implementation scope, then stop.

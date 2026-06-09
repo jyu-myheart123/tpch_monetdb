@@ -1,0 +1,1 @@
+Write only to files allowed by the active stage.

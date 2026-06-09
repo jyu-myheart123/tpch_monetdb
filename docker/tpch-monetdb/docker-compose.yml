@@ -1,0 +1,124 @@
+services:
+  tpch-monetdb:
+    build:
+      context: ../..
+      dockerfile: docker/tpch-monetdb/Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        PIP_TRUSTED_HOST: ${PIP_TRUSTED_HOST:-mirrors.aliyun.com}
+        USE_ALIYUN_DNF_MIRROR: ${USE_ALIYUN_DNF_MIRROR:-true}
+    image: ${TPCH_MONETDB_IMAGE:-tpch-monetdb:local}
+    container_name: ${TPCH_MONETDB_CONTAINER:-tpch-monetdb}
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "${TPCH_MONETDB_PORT:-50000}:50000"
+    environment:
+      MDB_CREATE_DBS: ${TPCH_MONETDB_DATABASE:-tpch_smoke}
+      MDB_DB_ADMIN_PASS: ${TPCH_MONETDB_PASSWORD:-monetdb}
+      TPCH_MONETDB_HOST: 127.0.0.1
+      TPCH_MONETDB_PORT: "50000"
+      TPCH_MONETDB_DATABASE: ${TPCH_MONETDB_DATABASE:-tpch_smoke}
+      TPCH_MONETDB_USER: ${TPCH_MONETDB_USER:-monetdb}
+      TPCH_MONETDB_PASSWORD: ${TPCH_MONETDB_PASSWORD:-monetdb}
+      TPCH_MONETDB_FIXTURE_DIR: /data/tpch/sf1
+      TPCH_MONETDB_WORKSPACE: ${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      TPCH_MONETDB_HARDWARE_COUNTER_BACKEND: ${TPCH_MONETDB_HARDWARE_COUNTER_BACKEND:-linux_perf_native}
+      TPCH_MONETDB_PERF_BINARY: ${TPCH_MONETDB_PERF_BINARY:-/usr/local/bin/tpch-perf}
+      TPCH_MONETDB_PERF_EVENT_PARANOID: ${TPCH_MONETDB_PERF_EVENT_PARANOID:-1}
+      PYTHONPATH: ${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ${TPCH_MONETDB_WORKSPACE_HOST:-../..}:${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      - tpch-monetdb-dbfarm:/var/monetdb5/dbfarm
+      - tpch-monetdb-copy:/var/monetdb5/tpch-copy
+      - ./fixtures/tiny-tpch:/data/tpch/sf1:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python3 -c "import os, pymonetdb;
+          conn = pymonetdb.connect(
+          hostname='127.0.0.1',
+          port=int(os.environ.get('TPCH_MONETDB_PORT', '50000')),
+          database=os.environ.get('TPCH_MONETDB_DATABASE', 'tpch_smoke'),
+          username=os.environ.get('TPCH_MONETDB_USER', 'monetdb'),
+          password=os.environ.get('TPCH_MONETDB_PASSWORD', 'monetdb'),
+          autocommit=True);
+          conn.close()"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  tpch-monetdb-init:
+    image: ${TPCH_MONETDB_IMAGE:-tpch-monetdb:local}
+    profiles:
+      - init
+    depends_on:
+      tpch-monetdb:
+        condition: service_healthy
+    entrypoint:
+      - python3
+      - -c
+    command:
+      - |
+        from dataclasses import asdict
+        from pathlib import Path
+        import json
+        import os
+        import pymonetdb
+        from tpch_monetdb.dataset.gen_tpch.tpch_queries import TPCH_TABLES
+        from tpch_monetdb.oracle.monetdb_prepare import execute_statement, prepare_tpch_database
+
+        conn = pymonetdb.connect(
+            hostname=os.environ.get("TPCH_MONETDB_HOST", "tpch-monetdb"),
+            port=int(os.environ.get("TPCH_MONETDB_PORT", "50000")),
+            database=os.environ.get("TPCH_MONETDB_DATABASE", "tpch_smoke"),
+            username=os.environ.get("TPCH_MONETDB_USER", "monetdb"),
+            password=os.environ.get("TPCH_MONETDB_PASSWORD", "monetdb"),
+            autocommit=True,
+        )
+        try:
+            for table in reversed(TPCH_TABLES):
+                execute_statement(conn, f"DROP TABLE IF EXISTS {table}")
+            report = prepare_tpch_database(
+                conn,
+                Path(os.environ.get("TPCH_MONETDB_FIXTURE_DIR", "/data/tpch/sf1")),
+            )
+            print(json.dumps(asdict(report), ensure_ascii=False, sort_keys=True))
+        finally:
+            conn.close()
+    environment:
+      TPCH_MONETDB_HOST: tpch-monetdb
+      TPCH_MONETDB_PORT: "50000"
+      TPCH_MONETDB_DATABASE: ${TPCH_MONETDB_DATABASE:-tpch_smoke}
+      TPCH_MONETDB_USER: ${TPCH_MONETDB_USER:-monetdb}
+      TPCH_MONETDB_PASSWORD: ${TPCH_MONETDB_PASSWORD:-monetdb}
+      TPCH_MONETDB_FIXTURE_DIR: /data/tpch/sf1
+      TPCH_MONETDB_WORKSPACE: ${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      TPCH_MONETDB_HARDWARE_COUNTER_BACKEND: ${TPCH_MONETDB_HARDWARE_COUNTER_BACKEND:-linux_perf_native}
+      TPCH_MONETDB_PERF_BINARY: ${TPCH_MONETDB_PERF_BINARY:-/usr/local/bin/tpch-perf}
+      TPCH_MONETDB_PERF_EVENT_PARANOID: ${TPCH_MONETDB_PERF_EVENT_PARANOID:-1}
+      PYTHONPATH: ${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      PYTHONDONTWRITEBYTECODE: "1"
+      TMPDIR: /var/monetdb5/tpch-copy
+    volumes:
+      - ${TPCH_MONETDB_WORKSPACE_HOST:-../..}:${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      - tpch-monetdb-copy:/var/monetdb5/tpch-copy
+      - ./fixtures/tiny-tpch:/data/tpch/sf1:ro
+
+volumes:
+  tpch-monetdb-dbfarm:
+  tpch-monetdb-copy:

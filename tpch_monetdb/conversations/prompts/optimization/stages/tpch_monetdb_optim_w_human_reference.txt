@@ -1,0 +1,9 @@
+${constraints}
+
+Optimize query ${query_id} based on the collected tracing statistics in `tracing_output.log`.
+
+Re-check whether the current approach still uses generic containers or materialization steps where a bounded dense accumulator, integer-id path, or more cache-friendly lookup structure would be better at this scale. If hashing is unavoidable, prefer a pre-sized cache-friendly probing structure over a hot-loop `std::unordered_map`.
+
+${query_guidance}
+
+Reduce the query runtime to less than ${target_rt} for sf ${sf} (current runtime: ${current_rt}). Approach this as Prof. Thomas Neumann or Matthias Jasny would: apply every low-level technique available, leave nothing on the table. Focus on the bottlenecks identified in the tracing output, but also reconsider the overall approach if the remaining gap is large.

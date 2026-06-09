@@ -1,0 +1,6 @@
+Check TODO.md for the planned implementation order, then execute and check termination without error.
+First call the compile tool, then check the run tool (scalefactors $sf_verify_str).
+If compile or run fails, fix the implementation accordingly.
+If compile succeeds and the run tool returns exit_code 0 for the requested scale factors, stop this stage immediately.
+Do not keep refactoring after termination is already clean.
+Do not inspect CSV semantics in this stage; only enforce compile success and run-tool termination without error.

@@ -1,0 +1,105 @@
+# TPC-H Base Implementation - Stage 1: TODO Plan
+
+You are an expert database engineer and skilled C++ programmer.
+Write a specialized high-performance TPC-H analytical engine in C++ that is optimized to only execute a predefined set of queries.
+The database engine should run the queries described in `$queries_path` ($query_count $query_word).
+Datatypes and operators can be hard-coded into the program to avoid interpretation overhead.
+
+## Data Format
+
+Input data is a TPC-H table directory:
+- Location: `$data_path`
+- Files: `customer.tbl`, `lineitem.tbl`, `nation.tbl`, `orders.tbl`, `part.tbl`, `partsupp.tbl`, `region.tbl`, `supplier.tbl`
+- Format: pipe-delimited TPC-H `.tbl` rows, preserving SQL column types declared in the table schema
+- Runtime boundary: generated runtime and Dockerized MonetDB baseline must consume the same logical TPC-H rows
+
+## Implementation Files
+
+You need to implement the following source groups:
+1. $loader_path: Define `RawData` structure and implement TPC-H table loading (loader skeleton provided)
+2. $builder_path: Define `Engine` structure and build indexes from RawData (**start from skeleton**)
+3. $query_impl_path: Implement the query dispatcher (thin forwarding in `query_impl.cpp`) and put non-trivial kernel logic into focused query modules created on demand, for example `query_q2.cpp`, `query_q9.cpp`, `query_q12.hpp`, or `query_shared_groupby.hpp`.
+
+**Important**: The build and query templates are minimal skeletons. You need to implement:
+- Engine data structures suitable for TPC-H joins, filters, aggregations, ordering, and numeric output
+- Query dispatcher and all requested query execution logic, with focused query modules owning split kernels rather than pushing every kernel back into `query_impl.cpp`
+- CSV output formatting
+
+The supported TPC-H workload spans Q1-Q22 across scans, multi-table joins, semi/anti joins, correlated subqueries, case/ratio aggregates, string predicates, ordering, and top-k result shapes. Implement the subset requested by this conversation, but keep the dispatcher and execution structure consistent with the Q1-Q22 module registry.
+
+Prefer editing an existing focused `query_q*.cpp` / `query_q*.hpp` module for the active family, or creating a new `query_q*.cpp` / `query_q*.hpp` pair before falling back to a monolithic rewrite of `query_impl.cpp`.
+Use `query_shared_*.cpp` / `query_shared_*.hpp` only for pure shared helpers such as timestamp formatting or reusable aggregation kernels; they must never own dispatcher logic, `dispatch_unimplemented_query(...)`, or any `execute_q<N>(...)` entrypoint. The dispatcher stays small and stable.
+
+Do not treat the loader as the primary optimization target for this stage. Focus on getting a working vertical slice through build and query first.
+
+## Storage Layout Requirements
+
+Choose an efficient in-memory representation for parsed TPC-H tables and query execution.
+$storage_hint
+Queries must be Engine consumers. The TODO plan must state that source `.tbl` reading and parsing are loader responsibilities, query-ready indexes/layout are builder and Engine responsibilities, and `execute_q<N>(Engine& engine, ...)` must not rediscover files or reconstruct source tables to compensate for missing Engine fields.
+
+## Query Interface
+
+The query interface uses stdin/stdout protocol:
+- Input: Multiple lines of `<QUERY_NR> <QUERY_PARAMETERS>` (e.g., "1" for Q1, "2 'host_0' ..." for Q2)
+- Empty line signals end of input
+- Output: One CSV file per query: `result<RUN_NR>.csv` (RUN_NR starts from 1)
+- Timing: Print `"<QUERY_ID> | Execution ms: <time>"` and `"<QUERY_ID> | Query ms: <time>"` to stdout after each query
+- stdout must only contain timing/status lines; do not print query result rows to stdout
+
+Use the header-only C++ parser defined in `$args_path` to parse query requests.
+
+## Output Requirements
+
+Write the output of each query into a separate csv file:
+- Name: `result<RUN_NR>.csv` where RUN_NR starts from 1
+- CSV format: delimiter=',', escapechar='\\', quotechar='"', header=True
+- Column order must match the QueryContract output_columns exactly
+
+## Task
+
+Create a detailed TODO plan with steps to implement this TPC-H engine:
+1. TPC-H table loading strategy
+2. RawData structure definition for all required tables
+3. Engine structure with typed vectors, key maps, join-support indexes, and ordering helpers
+4. Build process from RawData to Engine
+5. Query dispatcher design
+6. Implementation order for the requested queries
+7. Per-query Engine dependencies and expected runtime shape in terms of table scans, join probes, predicate filters, aggregation groups, sorting, and result rows
+8. Per-query performance observation tasks that record generated no-output kernel runtime, MonetDB baseline runtime, and speedup when benchmark evidence is later available
+
+Write the plan to `TODO.md`.
+The file must be non-empty markdown checklist content.
+Every checklist item in this initial TODO plan must start unchecked as `- [ ]`.
+Do not mark any item as completed or in-progress during `todo_plan`, even if a skeleton file appears partially implemented.
+Read `workload_objective.json`, `data_law_contract.json`, `storage_plan_contract.json`, `storage_plan.txt`, and `design_evidence.md` before writing the plan.
+For every query where `workload_objective.json` has `requires_vectorization=true`, `TODO.md` must include a dedicated checklist item under `## Query Order` and a dedicated checklist item under a `## Vectorization-Ready Layout Tasks` section. These items are implementation blockers, not future optimization notes.
+For every query listed in `storage_plan_contract.json.critical_query_access_paths`, `TODO.md` must include dedicated checklist items under `## Per-Query Access Paths` that restate the selected access path, required Engine fields/indexes, rejected shortcut to avoid, and data-law IDs. Do not compress these critical access paths into a single "critical queries validated" item.
+For every requested query, `TODO.md` must include separate checklist items for:
+- implementation in the focused `query_q<N>.cpp` / `query_q<N>.hpp` entrypoint
+- correctness validation evidence
+- base performance observation evidence
+The performance observation item is completed when benchmark evidence is recorded, not when speedup exceeds a threshold.
+Do not create any collapsed summary checkbox such as `Q1-Q22 all implemented`, `all critical queries validated`, `full engine complete`, or `vectorization-ready layout complete`. Summary text may appear in paragraphs, but every checklist item must name one concrete loader/builder/dispatcher task, one concrete query, one concrete access path, one concrete fidelity rule, or one concrete performance observation.
+Do not create a `COMPLETE`, `VERIFIED`, or `Done` section in the initial plan. The initial TODO is a work plan, not a status report.
+The file must contain these section headers exactly once:
+- `## TPC-H Table Loading`
+- `## RawData`
+- `## Engine`
+- `## Build`
+- `## Dispatcher`
+- `## Query Order`
+- `## Per-Query Access Paths`
+- `## Loader Fidelity`
+- `## Output Fidelity`
+- `## Join and Ordering Fidelity`
+- `## Vectorization-Ready Layout Tasks`
+- `## Base Performance Observations`
+- `## Deferred`
+You do not need to inspect every implementation file exhaustively.
+Prefer reading `queries.txt`, `args_parser.hpp`, and the three `*_impl.hpp` files first.
+Inspect `*_impl.cpp` only for top-level entrypoints or missing structural details.
+Once the data flow, query interface, and file responsibilities are clear, write `TODO.md` immediately.
+Do not only summarize in natural language. The actual file content must be complete.
+$todo_plan_asset
+Do not start implementation yet.

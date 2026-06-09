@@ -1,0 +1,117 @@
+# Memory Access & Data Movement
+
+1. Ensure sequential memory access patterns
+Traverse table columns and row vectors linearly whenever possible. Sequential access maximizes cache line utilization and hardware prefetch efficiency.
+
+2. Prefer pointer iteration over indexed access in tight loops - ensure sequential memory access patterns
+Sequential pointer traversal reduces address recomputation and improves auto-vectorization.
+
+3. Prefetch data when accessing through indices
+If you access arrays indirectly through an index list, the CPU cannot predict what memory will be needed next. Manually prefetching upcoming elements helps hide memory latency and reduces cache misses.
+
+4. Copy small records into local variables
+When repeatedly accessing multiple fields of a small struct, copy the struct into a local variable first. This allows the compiler to keep values in registers instead of reloading them from memory.
+
+5. Avoid unnecessary move or copy operations
+Use in-place construction and rely on compiler elision where possible.
+
+# Loop Structure & Invariants
+
+6. Hoist invariant work out of loops
+Any computation, lookup, or reference that does not change per iteration must be moved outside the loop.
+
+7. Eliminate repeated structural checks
+Do not repeatedly verify conditions that are constant or guaranteed.
+Compute once, cache once, or rely on established invariants.
+Also, if different conditions require different processing strategies, determine the strategy before the loop starts and then run the appropriate version. Avoid checking the same conditions repeatedly while scanning data.
+
+8. Decide execution strategy before entering the loop
+If multiple processing modes exist, select the mode once and run a dedicated loop variant.
+
+9. Avoid duplicating large loop bodies
+If several branches run almost identical loops with only small differences in filtering, combine them into one loop and control behavior with flags. This keeps code smaller, improves instruction cache usage, and helps the compiler optimize better.
+
+# Control Flow
+
+10. Minimize branching in inner loops
+Use early-continue filtering or direct predicate-based accumulation.
+Avoid auxiliary state flags if results can be inferred.
+
+11. Consider branchless computation when branch prediction is poor
+If control flow is unpredictable, replace branches with arithmetic masking.
+Computing a boolean condition and using it to control arithmetic (e.g., multiply by 0 or 1) can be faster than branching, especially in large scans.
+
+# Arithmetic & Computation Cost
+
+12. Remove expensive arithmetic from hot loops
+Avoid division or other high-latency operations per element.
+Precompute constants or perform normalization after aggregation.
+
+13. Avoid expensive general-purpose parsing in hot paths
+Do not use high-level string conversions or substring allocation inside tight loops (e.g. std::stoi, std::stod, substr).
+Prefer fixed-format, allocation-free parsing directly from raw memory.
+
+# Containers & Lookup Struktures
+
+14. Pre-size output containers using realistic estimates
+Estimate result size from selectivity or statistics to avoid dynamic growth.
+
+15. Replace repeated linear searches with indexed lookup structures
+Use hash-based or constant-time lookup instead of scanning collections repeatedly.
+
+# Workload Geometry & Scale
+
+16. Identify the growth axis before changing the algorithm
+Separate `rows scanned`, `table cardinality`, `join fanout`, `group cardinality`, `sort/top-k cardinality`, and `candidate/output cardinality`. Different growth axes call for different data structures and loop shapes.
+
+17. Prefer direct indexing when the key space is bounded
+If table keys, dictionary ids, date ranges, or group domains are small and bounded, prefer direct indexing or a flat dense accumulator over a generic map.
+
+18. Keep the scan path and the output path separate
+Large data often means the bottleneck is not only scanning rows, but also candidate collection, sorting, and string materialization. Reduce work in the dominant path first.
+
+19. Delay expensive materialization on large outputs
+When possible, collect compact row references or integer ids first, and materialize strings only in the final emit path.
+
+# Container Strategy
+
+20. Choose containers by boundedness, not habit
+Prefer this order when applicable: direct indexing > dense flat accumulator > sorted vector with binary search > specialized hash table > `std::unordered_map`.
+
+21. Prefer dense accumulators for bounded aggregations
+For low-cardinality group keys or bounded query domains, a dense accumulator is usually better than hashing because it removes probe overhead and improves locality.
+
+22. Operate on integer ids instead of strings in hot paths
+Resolve table keys, dictionary strings, and category values once, then use compact integer ids for filtering, joining, grouping, lookup, and ordering.
+
+# Hash Tables & Lookup Structures
+
+23. Use hash tables only when the key space is sparse or cannot be bounded cheaply
+If a direct-indexed structure is feasible in memory, prefer it. Hashing is a fallback for sparse or irregular key spaces, not the default.
+
+24. Pre-size hash tables and avoid rehashing
+Reserve realistic capacity before the hot loop starts. Rehashing inside a scan destroys locality and adds unpredictable latency.
+
+25. Prefer open-addressing or other cache-friendly probing schemes
+If hashing is unavoidable, prefer open-addressing style layouts over pointer-heavy node-based containers. Avoid `std::unordered_map` in the hottest loop unless there is no bounded or cache-friendly alternative.
+
+26. Keep hash-table state compact and query-lifetime
+Store compact keys or ids, avoid erase-heavy mutation patterns, and prefer grow-only query-lifetime structures in execution paths.
+
+# Algorithm Selection
+
+27. Use algorithms specialized for data characteristics
+For fixed-width numeric keys or sortable primitives, prefer non-comparison-based or domain-specific algorithms.
+
+# Compiler Optimization Signals
+
+28. Communicate aliasing guarantees
+Tell the compiler when memory regions do not overlap (e.g. restrict semantics).
+
+29. Inline hot functions when beneficial
+Reduces call overhead and exposes optimization opportunities.
+
+# Vectorizaton & Hardware Utilization
+
+30. Exploit SIMD parallelism where applicable
+Process multiple elements per iteration using vectorized comparisons and masked arithmetic.

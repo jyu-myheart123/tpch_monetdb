@@ -1,0 +1,1 @@
+Use a path under the workspace root, e.g. '.', '/', or a child relative path.

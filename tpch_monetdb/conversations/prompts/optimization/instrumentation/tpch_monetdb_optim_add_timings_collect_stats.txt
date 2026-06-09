@@ -1,0 +1,114 @@
+# Objective
+Add or repair tracing instrumentation only for the full Q1-Q22 TPC-H workload. The goal is to collect stable timing and COUNT signals without changing query semantics, storage layout, or unrelated algorithm choices.
+
+# Requirements
+## 1. Compilation & Overhead
+- All profiling code must be behind #ifdef TRACE
+- Zero overhead when compiled without the flag
+- No allocations or I/O in hot paths—print results once at the end of each phase
+- Use high-resolution timers (nanosecond precision)
+
+## 2. Output Format
+Stable, machine-parsable output with two line types:
+```
+PROFILE <section_name> <nanoseconds>
+COUNT <counter_name> <value>
+```
+Names should reflect the specific phase and operation. Examples:
+- `loader_total`, `loader_parse_table`, `loader_parse_columns`, `loader_parse_dates`
+- `builder_total`, `builder_key_maps`, `builder_adjacency_build`, `builder_table_copy`
+- `query_total`, `query_scan`, `query_filter`, `query_join`, `query_aggregate`, `query_sort`, `query_output`
+
+## 3. Counter Instrumentation
+Track data flow through each phase:
+
+Loader counters:
+- table_rows_parsed - Total TPC-H table rows parsed
+- table_rows_skipped - Rows skipped because they are empty or invalid
+- bytes_read - Total bytes read from table files
+- table_count_loaded - Number of TPC-H tables loaded
+
+Builder counters:
+- key_map_entries - Total primary/foreign-key map entries created
+- adjacency_edges - Total reusable row-id adjacency edges created
+- rows_indexed - Total rows copied or indexed into Engine state
+
+Query scan counters:
+- rows_scanned - Total rows examined
+- rows_filtered - Rows excluded by table predicates
+- rows_emitted - Rows passing all filters (rows_scanned - rows_filtered)
+
+Query join counters:
+- join_probe_count - Number of key lookups or join probes
+- join_candidate_rows - Candidate rows produced by joins before final filters
+- join_output_rows - Rows surviving join predicates
+
+Query aggregation counters:
+- groups_created - Distinct aggregation groups
+- agg_rows_in - Input rows to aggregation
+- agg_rows_emitted - Output rows (usually equals groups_created)
+
+Query sort/output counters:
+- sort_rows_in - Rows entering explicit sort/top-k
+- output_rows_materialized - Rows materialized for CSV output
+
+General:
+- query_output_rows - Final result count per query
+
+## 4. Implementation Pattern
+Use RAII-style scoped timers with a correct two-layer concat helper so that
+`__LINE__` is expanded before token pasting:
+```
+#ifdef TRACE
+#define TPCH_MONETDB_CONCAT_INNER(a, b) a##b
+#define TPCH_MONETDB_CONCAT(a, b) TPCH_MONETDB_CONCAT_INNER(a, b)
+#define PROFILE_SCOPE(name) ScopedTimer TPCH_MONETDB_CONCAT(_timer_, __LINE__)(name)
+class ScopedTimer {
+    const char* name;
+    uint64_t start_ns;
+public:
+    ScopedTimer(const char* n) : name(n), start_ns(get_time_ns()) {}
+    ~ScopedTimer() { record_timing(name, get_time_ns() - start_ns); }
+};
+#else
+#define PROFILE_SCOPE(name)
+#endif
+```
+Usage:
+```
+void execute_loader() {
+    PROFILE_SCOPE("loader_total");
+    {
+        PROFILE_SCOPE("loader_parse_lines");
+        parse_all_lines();
+    }
+    TRACE_COUNT("lines_parsed", line_count);
+}
+```
+
+# Scope rules
+- Only change tracing / profiling support and the minimum code needed to expose tracing output safely.
+- Do NOT change query semantics, storage layout, or unrelated kernel logic.
+- Do NOT use this stage to opportunistically optimize queries.
+- When the current validation checks pass, stop immediately.
+
+## 5. Minimum function-level coverage
+
+For every requested query q<N>, the trace output must include PROFILE query_q<N> plus at least four additional function-level PROFILE sections that distinguish the major sub-operations within the query. A trace with fewer than 5 distinct PROFILE sections per query is insufficient.
+
+Required function-level scopes per query (name them after the actual function or purpose):
+- query_q<N>_scan_* — at least one scan sub-path (e.g. _scan_host_filter, _scan_range_check, _scan_row_decode)
+- query_q<N>_filter_* — at least one filter sub-path (e.g. _filter_where, _filter_having, _filter_predicate)
+- query_q<N>_agg_*   — at least one aggregate sub-path (e.g. _agg_hash_build, _agg_bucket_assign, _agg_accumulate)
+- query_q<N>_output_* — at least one output sub-path (e.g. _output_format, _output_sort, _output_serialize)
+
+Additional suffixes are encouraged when the code has more distinct phases:
+- query_q<N>_join_*    — join or merge operations
+- query_q<N>_sort_*    — explicit sort calls
+- query_q<N>_materialize_* — string or column materialization
+
+Place PROFILE_SCOPE macros inside the actual query functions, not just the top-level dispatch. The goal is to distinguish the cost of individual scan/filter/aggregate/output sub-operations at function granularity. A trace that only contains coarse phase-level scopes (query_q<N> + query_q<N>_scan) is insufficient for optimization.
+PROFILE_SCOPE must be inserted into the existing final-path implementation. Do not create `query_shared_instrumented.*`, do not create `execute_*_instrumented` functions, and do not redirect `query_q*.cpp` entrypoints to instrumentation-only replacements.
+
+# YOUR TASK
+Instrument the loader (TPC-H table parsing), builder (typed table/key/adjacency construction), and query execution paths only as needed to collect the tracing statistics. Use macros to add timing and counting instrumentation to major operations while keeping the output stable and parsable, and ensure there is no overhead when TRACE is disabled.

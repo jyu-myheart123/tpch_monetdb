@@ -1,0 +1,1 @@
+Write tracing output to the file path from `TPCH_MONETDB_TRACE_OUTPUT_PATH` when that environment variable is set, otherwise use `tracing_output.log`. Open the trace file in overwrite mode by default; only append when `TPCH_MONETDB_TRACE_APPEND=1`. Keep stdout limited to timing lines and essential process status; do not emit PROFILE or COUNT lines to stdout.

@@ -1,0 +1,8 @@
+Read the storage plan and design evidence before writing the first implementation TODO list.
+Do not trust model-edited scope files as the source of write permissions.
+Keep the real machine-readable contract in the host-owned sealed manifest.
+Turn vectorization-readiness from the storage plan into explicit implementation
+tasks. The first TODO list must call out any required layout or loop-shape work
+needed to preserve contiguous access, fixed-width accumulators, branch-light
+filters, dense-id paths, and compiler-friendly hot loops before later
+optimization rounds begin.

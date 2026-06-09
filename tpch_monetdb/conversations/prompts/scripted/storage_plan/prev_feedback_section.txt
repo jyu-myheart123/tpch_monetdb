@@ -1,0 +1,8 @@
+## Previous round feedback
+
+$prev_run_report
+
+Respond to the supported problems in the previous round feedback.
+Use the failure route and objective failures to choose the smallest complete fix that can close the objective. If the prior failure is layout/access-path or contract alignment, a structural redesign is required; do not prefer a convenience minimal patch.
+If the previous round feedback says correctness was invalid, treat it as a gating
+note rather than as layout evidence.

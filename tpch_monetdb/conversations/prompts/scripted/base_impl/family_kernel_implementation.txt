@@ -1,0 +1,43 @@
+# Stage: Implement $family_name Family Vertical Slice
+
+Before making any changes, use the read_file tool to read:
+1. TODO.md - planned file structure and implementation order
+2. storage_plan.txt and storage_plan_contract.json - committed layout, critical query access paths, query execution strategy, and selected layout obligations for this family
+3. loader_impl.hpp, builder_impl.hpp, query_impl.hpp, and args_parser.hpp - current Engine contract and dispatcher ABI
+
+**Query family**: $family_name
+**Covered queries**: $all_qids_str
+**Family implementation files**: $kernel_header / $kernel_source plus the focused `query_q*.cpp` entrypoints
+
+Implement the active query family as a vertical slice:
+
+**Step 1: Confirm the Engine contract for this family**
+- Queries must consume query-ready `Engine` structures built by loader/builder.
+- If this family covers a critical query listed in `critical_query_access_paths`,
+  implement its selected access path and ignore rejected candidate ideas unless
+  they were promoted into committed obligations.
+- If table columns, join keys, date filters, string predicates, grouping, ordering, or aggregate state required by this family is missing, repair RawData, `loader_impl`, `builder_impl`, or `Engine` before changing query code into a raw-source reconstruction path.
+- Do not discover or parse source `.tbl` files from family kernels or entrypoints.
+
+**Step 2: Create or update shared helpers only when they are truly shared**
+- Use `query_shared_*.cpp` / `query_shared_*.hpp` for pure helpers such as date parsing/formatting, decimal formatting, join-key lookup, string predicates, ordering comparators, and reusable aggregation/result formatting.
+- Define each shared helper exactly once. Do not duplicate helpers in multiple `query_q*.cpp` or `query_family_*.cpp` files.
+- Shared files must not define `execute_q*`, `dispatch_query`, or `dispatch_unimplemented_query`.
+
+**Step 3: Create the family kernel** `$kernel_source` / `$kernel_header`
+- Implement the actual runtime shape for `$family_name` instead of forcing every family into a generic groupby template.
+- Related TPC-H queries should share reusable scan, join, aggregation, ordering, and formatting kernels only when the shared path preserves each query's SQL semantics.
+- If this family covers any query whose `workload_objective.json` target has `requires_vectorization=true`, implement the actual hot-loop shape now. Do not leave SIMD/vectorization as a pending TODO, and do not count unrelated vectorized loops as success.
+
+**Step 4: Create a thin entrypoint for the first query in the family** `query_q$first_qid.cpp` / `query_q$first_qid.hpp`
+- About 15 lines of code when the Engine contract is sufficient
+- Call `parse_q$first_qid()` from `args_parser.hpp`
+- Call the shared family kernel with the correct query-specific parameters
+- Declare `void execute_q$first_qid(Engine& engine, const Q${first_qid}Args& args);`
+- Do not include helper functions such as date parsing, join lookup, ordering, or output formatting in the entrypoint
+
+$query_output_protocol
+$sample_args
+$codegen_hint_text
+
+Stop after creating or updating the family vertical slice. Do not run compile or run.

@@ -1,0 +1,1 @@
+ If the storage layout and machine-readable obligations are clear enough, write storage_plan.txt and storage_plan_contract.json now and stop.

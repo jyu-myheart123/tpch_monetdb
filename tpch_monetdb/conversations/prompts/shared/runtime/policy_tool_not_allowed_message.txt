@@ -1,0 +1,1 @@
+Tool $tool_name is not allowed in profile $profile_name.

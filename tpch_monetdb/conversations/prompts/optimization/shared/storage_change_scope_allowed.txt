@@ -1,0 +1,1 @@
+Storage layout, column ordering, and shared access path changes are allowed only when the evidence directly supports them.

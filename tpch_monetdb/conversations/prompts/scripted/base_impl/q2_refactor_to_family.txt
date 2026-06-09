@@ -1,0 +1,18 @@
+# Stage: Refactor Q2 to Use Shared TPC-H Join Helpers
+
+Before making any changes, use the read_file tool to read TODO.md, storage_plan.txt, and storage_plan_contract.json.
+
+TPC-H Q2 should reuse shared helper code only for generic table/join operations.
+It must preserve the Q2-specific minimum supply-cost subquery and ORDER BY semantics.
+
+**Refactor `query_q2.cpp`**:
+- Remove duplicated helpers such as date parsing, decimal formatting, string matching, and join-key lookup when a shared helper already provides the same semantics.
+- Keep Q2's part/supplier/partsupp/nation/region join, type suffix filter, size filter, region filter, and per-part minimum supply-cost logic explicit and testable.
+- Parse the arguments and then call reusable helpers with Q2-specific parameters.
+- Keep the entrypoint thin when the Engine contract is sufficient.
+- Preserve the Q2 CSV column order and formatting exactly
+- Declare `void execute_q2(Engine& engine, const Q2Args& args);`
+
+$query_output_protocol
+
+Do not run compile or run.

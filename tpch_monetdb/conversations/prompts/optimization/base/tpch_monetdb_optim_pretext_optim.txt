@@ -1,0 +1,13 @@
+# TPC-H MonetDB Optimization Task
+
+Optimize the TPC-H MonetDB engine implementation over the full loader / builder /
+query pipeline.$storage_layout_hint You may modify storage layout, query
+execution logic, data structures, and algorithms so long as the hard
+constraints in the constraints block are preserved.
+
+Query runtime is the primary optimization gate; ingest throughput is a
+secondary guardrail reported at stage end. Hardware-counter diagnostics,
+when available, remain diagnostic signals and do not replace end-to-end
+`Build ms` or `Ingest ms` measurements.
+
+Refer to the full hard constraints block rather than restating it here.

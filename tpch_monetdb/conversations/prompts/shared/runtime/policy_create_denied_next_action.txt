@@ -1,0 +1,1 @@
+Create only a focused query module inside the allowed create scope for this stage.

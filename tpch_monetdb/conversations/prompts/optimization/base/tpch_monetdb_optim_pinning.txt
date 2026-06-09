@@ -1,0 +1,8 @@
+# CPU Pinning Setup
+
+For consistent benchmark results, pin execution to CPU core $core_id.
+
+You may use `sched_setaffinity`, `pthread_setaffinity_np`, or run the
+process under `taskset -c $core_id`. Pick whichever mechanism is most
+natural for the surrounding code; do not expand CPU pinning beyond this
+single-core requirement.

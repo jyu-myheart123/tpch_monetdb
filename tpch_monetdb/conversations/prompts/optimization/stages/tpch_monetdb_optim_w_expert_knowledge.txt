@@ -1,0 +1,32 @@
+${constraints}
+
+Optimize query ${query_id} using the shared expert knowledge for a high-performance in-memory TPC-H/OLAP database engine.
+
+Before choosing an optimisation direction, classify the current workload geometry from `tracing_output.log`, the query arguments, and the implementation:
+- `rows scanned`
+- `table cardinality`
+- `join fanout`
+- `group cardinality`
+- `sort/top-k cardinality`
+- `candidate/output cardinality`
+
+Decide whether the hot path should remain a dense direct-indexed / bounded-accumulator path, use reusable key/adjacency maps, or truly needs a sparse lookup structure. Prefer dense bounded structures when the key space is small enough to index directly.
+
+Use `tracing_output.log` and the current implementation to decide which of these two bottleneck classes is dominant right now:
+
+1. `layout/access-path bound`
+2. `kernel/compute bound`
+
+Choose one primary optimisation axis for this stage:
+- If the bottleneck is `layout/access-path bound`, prioritise storage layout, traversal order, memory locality, output container sizing, and lookup structure changes${bespoke_storage_related}.
+- If the bottleneck is `kernel/compute bound`, prioritise loop structure, branching, arithmetic cost, SIMD, and compiler optimisation signals.
+
+Avoid scatter-shot changes across both classes unless the trace evidence shows they are tightly coupled in the current hot path.
+
+Expert guidance:
+
+${expert_knowledge}
+
+${query_guidance}
+
+Reduce runtime to less than ${target_rt} for sf ${sf} (current runtime: ${current_rt}). Keep this stage focused on the dominant bottleneck rather than trying unrelated broad rewrites.

@@ -1,0 +1,20 @@
+Check TODO.md, storage_plan.txt, and storage_plan_contract.json for build optimization opportunities aligned with the planned layout, then optimize the build implementation for scale factor $max_scale_factor. Improve build / ingest time when possible, but do not treat any fixed threshold as a hard requirement.
+
+Stay builder-centric by default. Touch loader or query code only when ingest evidence shows that is the minimum necessary move.
+
+Use one concrete build optimization hypothesis at a time.
+After each change:
+1. compile
+2. run a fast regression subset with scale_factor 1; include Q1, Q8, Q11, and Q15 when they are present in the requested query set
+3. only if that passes, run the full correctness check with scale_factor $sf_verify_str
+4. only after correctness still passes, measure build time with scale_factor $max_scale_factor
+
+If a change causes correctness regression or `Broken pipe`, stop broad exploration and try a different builder-centric optimization.
+If you cannot improve build time without a broader change, stop and report that blocker rather than editing unrelated files.
+Use efficient data structures and algorithms focused on builder behavior.
+
+IMPORTANT STOP CONDITIONS — read these carefully:
+- The first action in this stage MUST be: compile. If compilation succeeds, immediately declare the stage complete. A clean compile with optimization flags is the primary goal.
+- Do NOT re-read TODO.md, storage_plan.txt, or storage_plan_contract.json after the initial read. Read each file at most once.
+- Do NOT loop: if you have already tried compile and it succeeded, stop and report success. Do not call compile again unless you made code changes.
+- If you make no code changes, the only tool call needed is compile. After that, stop.

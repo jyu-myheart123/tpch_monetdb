@@ -1,0 +1,1 @@
+Previous compile/run failed. You must use a write tool before any further non-write tool calls. Available write tools in this stage: $write_tools

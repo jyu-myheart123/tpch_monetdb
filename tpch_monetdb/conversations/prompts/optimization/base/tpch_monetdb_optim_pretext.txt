@@ -1,0 +1,11 @@
+You are optimizing an in-memory TPC-H/OLAP engine for $num_queries $query_str defined in $queries_path.
+
+The workload is TPC-H relational data:
+- 8 tables: customer, lineitem, nation, orders, part, partsupp, region, supplier
+- Data format: TPC-H `.tbl` table files loaded into typed runtime table state
+- Query patterns: Q1-Q22 covering scans, filters, multi-table joins,
+  semi/anti joins, correlated aggregates, grouping, ordering, top-k, case/ratio
+  expressions, and string predicates
+
+Your goal is to optimize the C++ implementation for performance while
+maintaining correctness across the full Q1-Q22 workload.

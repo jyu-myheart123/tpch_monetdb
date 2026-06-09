@@ -1,0 +1,9 @@
+${constraints}
+
+Optimize the implementation of query ${query_id} based on the collected tracing statistics in `tracing_output.log`.
+
+Focus on the hottest sections from the tracing output. Use this stage to
+identify the bottleneck, make one targeted change, and refresh the evidence if
+the current trace is inconclusive.
+
+Target: reduce runtime to less than ${target_rt} for sf ${sf} (${factor}x improvement, current: ${current_rt}). Aim for even larger reductions where possible.

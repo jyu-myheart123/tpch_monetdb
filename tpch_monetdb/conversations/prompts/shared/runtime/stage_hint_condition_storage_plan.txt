@@ -1,0 +1,1 @@
+write storage_plan.txt and storage_plan_contract.json, then stop this stage.
