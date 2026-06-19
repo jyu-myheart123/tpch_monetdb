@@ -49,15 +49,32 @@ class TpchQueryResult:
     
     def __post_init__(self) -> None:
         """初始化后的处理."""
-        raise NotImplementedError("TODO(student): initialize created_at and row_count")
+        # 自动设置创建时间戳（ISO 格式）
+        if not self.created_at:
+            self.created_at = datetime.now(timezone.utc).isoformat()
+        
+        # 自动计算行数
+        if self.row_count == 0 and self.rows:
+            # 如果 row_count 为 0 但有数据行，自动计算
+            self.row_count = len(self.rows)
     
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式."""
-        raise NotImplementedError("TODO(student): serialize TpchQueryResult to a JSON-friendly dict")
+        # 使用 dataclass 的 asdict 函数获取所有字段
+        result = asdict(self)
+        
+        # 需要特殊处理 sorted_by：从 tuple 转换为 list
+        # 因为 JSON 不直接支持 tuple，需要转为 list
+        if isinstance(result.get("sorted_by"), tuple):
+            result["sorted_by"] = list(result["sorted_by"])
+        
+        return result
     
     def to_json(self, indent: int = 2) -> str:
         """序列化为 JSON 字符串."""
-        raise NotImplementedError("TODO(student): serialize TpchQueryResult to JSON text")
+        # 先转换为字典，再转为 JSON
+        data = self.to_dict()
+        return json.dumps(data, indent=indent, ensure_ascii=False)
     
     def save_to_file(self, path: str) -> None:
         """保存到 JSON 文件."""
@@ -67,12 +84,23 @@ class TpchQueryResult:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "TpchQueryResult":
         """从字典创建实例."""
-        raise NotImplementedError("TODO(student): restore TpchQueryResult from a dict")
+        # 创建一个数据副本，避免修改原始输入
+        data_copy = dict(data)
+        
+        # 需要特殊处理 sorted_by：从 list 恢复为 tuple
+        # JSON 中是 list，但 dataclass 字段定义为 tuple
+        if "sorted_by" in data_copy and isinstance(data_copy["sorted_by"], list):
+            data_copy["sorted_by"] = tuple(data_copy["sorted_by"])
+        
+        # 使用这个字典创建实例
+        return cls(**data_copy)
     
     @classmethod
     def from_json(cls, json_str: str) -> "TpchQueryResult":
         """从 JSON 字符串创建实例."""
-        raise NotImplementedError("TODO(student): restore TpchQueryResult from JSON text")
+        # 先解析 JSON，再使用 from_dict
+        data = json.loads(json_str)
+        return cls.from_dict(data)
     
     @classmethod
     def from_file(cls, path: str) -> "TpchQueryResult":
@@ -82,4 +110,13 @@ class TpchQueryResult:
     
     def get_summary(self) -> dict[str, Any]:
         """获取结果摘要（用于日志和调试）."""
-        raise NotImplementedError("TODO(student): return a compact result summary")
+        # 返回关键信息的摘要，用于快速查看结果概况
+        return {
+            "query_id": self.query_id,
+            "source": self.source,
+            "row_count": self.row_count,
+            "columns": len(self.columns),
+            "sorted_by": self.sorted_by,
+            "exec_time_ms": self.exec_time_ms,
+            "created_at": self.created_at,
+        }
