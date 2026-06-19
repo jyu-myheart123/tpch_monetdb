@@ -67,8 +67,19 @@ def setup_model_config(model_arg: str) -> ModelConfig:
             )
         base_url = os.environ.get("LITELLM_BASE_URL")
         if is_deepseek_model(model_name):
-            raise NotImplementedError(
-                "TODO(student): configure native, legacy, and rejected DeepSeek LiteLLM paths"
+            if is_anthropic_deepseek_model(model_name):
+                raise RuntimeError("DeepSeek models with anthropic prefix are not supported. Use litellm/deepseek/deepseek-v4-* or litellm/openai/deepseek-v4-* instead.")
+            if is_openai_deepseek_model(model_name):
+                if not base_url:
+                    base_url = "https://api.deepseek.com"
+                    logger.warning("Deprecated: Using legacy OpenAI-prefixed DeepSeek path without base_url, defaulting to %s", base_url)
+            return ModelConfig(
+                use_litellm=True,
+                model_name=model_name,
+                accounting_model_name=normalize_accounting_model_name(model_name),
+                api_key=api_key,
+                base_url=base_url,
+                openai_client=None,
             )
         return ModelConfig(
             use_litellm=True,

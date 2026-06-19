@@ -20,7 +20,7 @@ __pycache__/
 tsdb/.env
 # C extensions
 *.so
-
+tpch_monetdb/.env
 
 # Distribution / packaging
 .Python
