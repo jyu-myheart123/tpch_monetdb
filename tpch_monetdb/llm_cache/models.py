@@ -137,20 +137,6 @@ MODEL_REGISTRY: dict[str, ModelPricing] = {
         long_cached_input=1.101 / 1_000_000,
         long_output=6.602 / 1_000_000,
     ),
-    # DeepSeek V4 Flash - 平衡性能和成本的版本
-    "deepseek-v4-flash": ModelPricing(
-        input=0.14 / 1_000_000,           # 单位：美元/百万 token
-        cached_input=0.0028 / 1_000_000,  # 缓存 token 价格更便宜（2%）
-        output=0.28 / 1_000_000,          # 输出 token 价格是输入的 2 倍
-        context_window=1_000_000,         # 最大上下文窗口 100 万 token
-    ),
-    # DeepSeek V4 Pro - 高质量版本，价格更高
-    "deepseek-v4-pro": ModelPricing(
-        input=0.435 / 1_000_000,          # Flash 的 3 倍价格
-        cached_input=0.003625 / 1_000_000,  # 缓存 token 价格（约 0.83%）
-        output=0.87 / 1_000_000,          # 输出 token 价格是输入的 2 倍
-        context_window=1_000_000,         # 最大上下文窗口 100 万 token
-    ),
 }
 
 logger = logging.getLogger(__name__)
@@ -227,20 +213,7 @@ def request_cost_usd(
         Total cost in USD
     """
     if "deepseek-v4" in str(model):
-        # DeepSeek 计费逻辑：缓存 token 和新增 token 按不同价格计费
-        # 这体现了 DeepSeek 的 prompt cache 优势
-        pricing = get_model_pricing(str(model))
-        # 计算非缓存的 token 数（新增 token）
-        billable_input_tokens = max(0, input_tokens - cached_tokens)
-        
-        # 成本 = 缓存 token * 缓存价格 + 新增 token * 正常价格 + 输出 token * 输出价格
-        cost = (
-            cached_tokens * pricing.cached_input
-            + billable_input_tokens * pricing.input
-            + output_tokens * pricing.output
-        )
-        return max(0, cost)  # 确保不产生负成本
-    
+        raise NotImplementedError("TODO(student): implement DeepSeek cache hit/miss billing")
     pricing = get_model_pricing(str(model))
     billable_input_tokens = max(0, input_tokens - cached_tokens)
 

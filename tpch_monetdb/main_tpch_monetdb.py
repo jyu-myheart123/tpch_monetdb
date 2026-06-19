@@ -123,22 +123,7 @@ DEEPSEEK_DEFAULT_REASONING_EFFORT = "xhigh"
 
 def _normalize_deepseek_reasoning_effort(effort: str | None) -> str:
     """将 harness effort 归一化为 DeepSeek OpenAI Chat Completions 支持的值."""
-    # DeepSeek 支持两个主要的 reasoning effort 级别：
-    # - "max"：最高级别的思考，消耗最多 token 但质量最好
-    # - "high"：标准级别的思考
-    
-    if effort is None:
-        # 如果未指定，返回默认值
-        return "high"
-    
-    # 将各种 effort 值映射到 DeepSeek 支持的两个级别
-    # xhigh 和 max 都映射到 DeepSeek 的 "max"
-    if effort in ("xhigh", "max"):
-        return "max"
-    
-    # 其他值（minimal, low, medium, high）都映射到 "high"
-    # 这确保系统中的任何 effort 级别都能映射到 DeepSeek 的有效值
-    return "high"
+    raise NotImplementedError("TODO(student): map harness reasoning effort to DeepSeek values")
 
 
 def _normalize_agents_reasoning_effort(
@@ -188,41 +173,15 @@ def _build_model_settings(
         getattr(model_config, "accounting_model_name", "") or ""
     )
     extra_args: dict[str, Any] | None = None
-    if model_config.use_litellm:
-        if model_is_deepseek:
-            extra_args = {
-                "allowed_openai_params": ["thinking"],
-                "additional_drop_params": ["extra_body"],
-            }
-            if reasoning is not None and reasoning.effort != "none":
-                extra_args["allowed_openai_params"].append("reasoning_effort")
-        elif reasoning is not None:
-            extra_args = {"allowed_openai_params": ["reasoning_effort"]}
+    if model_config.use_litellm and reasoning is not None and not model_is_deepseek:
+        extra_args = {"allowed_openai_params": ["reasoning_effort"]}
 
     extra_body: dict[str, Any] | None = None
     reasoning_for_model = reasoning
     if model_is_deepseek and reasoning is not None and reasoning.effort != "none":
-        # 为 DeepSeek 模型注入 thinking/reasoning 参数
-        # DeepSeek 使用 extra_body 机制在 OpenAI 兼容 API 中传递额外参数
-        
-        # 将 harness effort 标准化为 DeepSeek 支持的值
-        deepseek_effort = _normalize_deepseek_reasoning_effort(reasoning.effort)
-        
-        # 构建 extra_body：DeepSeek 需要在请求体中指定 thinking 配置
-        # 格式：{"thinking": {"type": "enabled"}, "reasoning_effort": "max" 或 "high"}
-        extra_body = {
-            "thinking": {"type": "enabled"},
-            "reasoning_effort": deepseek_effort,
-        }
-        # 对于 DeepSeek，reasoning 对象不传给 OpenAI SDK，因为 SDK 不理解它
-        # 而是完全通过 extra_body 传递给 LiteLLM
-        reasoning_for_model = None
+        raise NotImplementedError("TODO(student): inject DeepSeek thinking extra_body")
     elif model_is_deepseek and reasoning is None:
-        # 当明确禁用 reasoning（effort == "none"）时，注入禁用指令
-        extra_body = {
-            "thinking": {"type": "disabled"},
-        }
-        reasoning_for_model = None
+        raise NotImplementedError("TODO(student): disable DeepSeek thinking when effort is none")
 
     model_specific_allowed = LITELLM_MODEL_ALLOWED_OPENAI_PARAMS.get(
         getattr(model_config, "model_name", "") or ""
