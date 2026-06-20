@@ -40,7 +40,7 @@ services:
       PYTHONPATH: ${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
       PYTHONDONTWRITEBYTECODE: "1"
     volumes:
-      - ${TPCH_MONETDB_WORKSPACE_HOST:-../..}:${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}
+      - ${TPCH_MONETDB_WORKSPACE_HOST:-../..}:${TPCH_MONETDB_WORKSPACE:-/workspace/tpch_monetdb_project}:z
       - tpch-monetdb-dbfarm:/var/monetdb5/dbfarm
       - tpch-monetdb-copy:/var/monetdb5/tpch-copy
       - ./fixtures/tiny-tpch:/data/tpch/sf1:ro

@@ -1,0 +1,67 @@
+{
+  "latest_round": 1,
+  "latest_file": "round_001.json",
+  "record": {
+    "outer_loop_name": "outer1-22v1",
+    "round_index": 1,
+    "query_list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "storage_plan": {
+      "conv_name": "storageplan1-22v1_r001",
+      "status": "failed",
+      "summary_path": null,
+      "retry_count": 2,
+      "failure_code": "PHASE_RETRY_EXHAUSTED",
+      "failure_detail": "storage plan phase failed"
+    },
+    "base_impl": {
+      "conv_name": "basef1-22v1_r001",
+      "status": "pending",
+      "summary_path": null,
+      "retry_count": 0,
+      "failure_code": null,
+      "failure_detail": null
+    },
+    "optimization": {
+      "conv_name": "runoptim1-22v1_r001",
+      "status": "pending",
+      "summary_path": null,
+      "retry_count": 0,
+      "failure_code": null,
+      "failure_detail": null
+    },
+    "outcome": "failed",
+    "action": "failed",
+    "action_reason": "storage plan phase failed",
+    "action_reason_code": "PHASE_RETRY_EXHAUSTED",
+    "aggregate_runtime_ms": 0.0,
+    "best_round_index": 0,
+    "best_optimization_summary_path": null,
+    "best_aggregate_runtime_ms": 0.0,
+    "best_final_snapshot_hash": null,
+    "objective_failures": [],
+    "failure_route": null
+  }
+}
