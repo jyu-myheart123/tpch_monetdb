@@ -49,9 +49,9 @@ class TpchQueryResult:
     
     def __post_init__(self) -> None:
         """初始化后的处理."""
-        # 自动设置创建时间戳（ISO 格式）
+        # 自动设置创建时间戳（ISO 格式，以 Z 结尾）
         if not self.created_at:
-            self.created_at = datetime.now(timezone.utc).isoformat()
+            self.created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         
         # 自动计算行数
         if self.row_count == 0 and self.rows:
@@ -115,7 +115,7 @@ class TpchQueryResult:
             "query_id": self.query_id,
             "source": self.source,
             "row_count": self.row_count,
-            "columns": len(self.columns),
+            "columns": self.columns,
             "sorted_by": self.sorted_by,
             "exec_time_ms": self.exec_time_ms,
             "created_at": self.created_at,

@@ -840,7 +840,7 @@ TPCH_QUERY_METADATA: dict[str, dict[str, object]] = {
     "Q6": {
         "tables": ("lineitem",),
         "features": ("scan", "filter", "aggregation"),
-        "ordering": TpchOrderingPolicy(SINGLE_ROW, True),
+        "ordering": TpchOrderingPolicy(SINGLE_ROW, False),
     },
     "Q7": {
         "tables": ("supplier", "lineitem", "orders", "customer", "nation"),
